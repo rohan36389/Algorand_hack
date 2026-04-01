@@ -51,12 +51,10 @@ export function BetPanel({ market, onSuccess }: BetPanelProps) {
         amount
       );
 
-      // Assign group ID
-      const txnGroup = algosdk.assignGroupID(txns);
-
+      // ATC already assigns the group ID
       // Sign with Pera Wallet
       const signedTxns = await peraWallet.signTransaction([
-        txnGroup.map(txn => ({ txn, signers: [activeAccount] }))
+        txns.map(txn => ({ txn, signers: [activeAccount] }))
       ]);
 
       // Send to network

@@ -80,9 +80,10 @@ export function CreateMarketModal({ isOpen, onClose, onSuccess }: CreateMarketMo
 
     const endTimestamp = Math.floor(new Date(`${endDate}T${endTime}`).getTime() / 1000);
     const now = Math.floor(Date.now() / 1000);
+    const minBuffer = 60 * 60; // 1 hour buffer
 
-    if (endTimestamp <= now) {
-      setError('End time must be in the future');
+    if (endTimestamp < now + minBuffer) {
+      setError('End time must be at least 1 hour in the future');
       return;
     }
 
@@ -99,12 +100,10 @@ export function CreateMarketModal({ isOpen, onClose, onSuccess }: CreateMarketMo
         endTimestamp
       );
 
-      // Assign group ID
-      const txnGroup = algosdk.assignGroupID(txns);
-
+      // ATC already assigns the group ID, we don't need to reassign it
       // Sign with Pera Wallet
       const signedTxns = await peraWallet.signTransaction([
-        txnGroup.map(txn => ({ txn, signers: [activeAccount] }))
+        txns.map(txn => ({ txn, signers: [activeAccount] }))
       ]);
 
       // Send to network
@@ -213,6 +212,7 @@ export function CreateMarketModal({ isOpen, onClose, onSuccess }: CreateMarketMo
               </label>
               <input
                 type="date"
+                min={new Date().toISOString().split('T')[0]}
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"

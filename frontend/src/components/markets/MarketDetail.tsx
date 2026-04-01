@@ -6,7 +6,7 @@
  */
 
 import { Market, getMarketStatus } from '@/types/market';
-import { microAlgosToAlgo, getTimeRemaining, formatTimestamp } from '@/lib/lora';
+import { microAlgosToAlgo, getTimeRemaining, formatTimestamp } from '@/lib/algorand';
 import { AccountLink, AppLink } from '@/components/lora/LoraLink';
 import { BetPanel } from './BetPanel';
 import { PoolChart } from './PoolChart';

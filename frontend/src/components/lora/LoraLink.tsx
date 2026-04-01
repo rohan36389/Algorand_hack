@@ -3,7 +3,7 @@
  * Provides convenient links to transactions, accounts, and apps
  */
 
-import { lora, truncateAddress } from '@/lib/lora';
+import { lora, truncateAddress } from '@/lib/algorand';
 import { ExternalLink } from 'lucide-react';
 
 interface TxLinkProps {

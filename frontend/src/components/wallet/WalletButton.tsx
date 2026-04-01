@@ -8,7 +8,7 @@
 import { useWallet } from '@/context/WalletContext';
 import { AccountLink } from '@/components/lora/LoraLink';
 import { Wallet, LogOut } from 'lucide-react';
-import { truncateAddress } from '@/lib/lora';
+import { truncateAddress } from '@/lib/algorand';
 
 export function WalletButton() {
   const { activeAccount, isConnected, isLoading, connect, disconnect } = useWallet();

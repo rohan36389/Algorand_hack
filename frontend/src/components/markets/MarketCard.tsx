@@ -5,7 +5,7 @@
  */
 
 import { Market, getMarketStatus } from '@/types/market';
-import { microAlgosToAlgo, getTimeRemaining } from '@/lib/lora';
+import { microAlgosToAlgo, getTimeRemaining } from '@/lib/algorand';
 import { Clock, TrendingUp, Users, CheckCircle, XCircle } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';

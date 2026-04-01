@@ -5,7 +5,7 @@
  */
 
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
-import { microAlgosToAlgo } from '@/lib/lora';
+import { microAlgosToAlgo } from '@/lib/algorand';
 
 interface PoolChartProps {
   pools: number[];
