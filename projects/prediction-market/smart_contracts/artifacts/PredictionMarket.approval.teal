@@ -1,0 +1,2291 @@
+#pragma version 11
+#pragma typetrack false
+
+// algopy.arc4.ARC4Contract.approval_program() -> uint64:
+main:
+    intcblock 0 1 8 2 160 255
+    bytecblock 0x00 0x005d 0x6d6b74 0x151f7c75 0x6d63 0x626574 0x6f61 0x6662 0x80 0x6673
+    // prediction_market.py:46
+    // class PredictionMarket(ARC4Contract):
+    txn OnCompletion
+    !
+    assert
+    txn ApplicationID
+    bz main_create_NoOp@15
+    pushbytess 0x31955bfc 0x56534ad7 0xcd9210d9 0xf363b364 0xe35cc11c 0x9ae0a41c 0xf0d7bbd6 0x13ffb7f6 0x7250a940 // method "create_market(string,string,string,string,string,uint8,uint64,pay)uint64", method "place_bet(uint64,uint8,pay)void", method "settle_market(uint64,uint8)void", method "cancel_market(uint64)void", method "claim_winnings(uint64)uint64", method "claim_refund(uint64)uint64", method "get_market(uint64)(string,string,string,string,string,uint8,uint64,uint8,bool,uint64,uint64,uint64,uint64,uint64,address)", method "get_bet(uint64,address)(uint8,uint64,bool)", method "get_market_count()uint64"
+    txna ApplicationArgs 0
+    match create_market place_bet settle_market cancel_market claim_winnings claim_refund get_market get_bet get_market_count
+    err
+
+main_create_NoOp@15:
+    // prediction_market.py:46
+    // class PredictionMarket(ARC4Contract):
+    pushbytes 0x280825d8 // method "bootstrap(address,address,uint64)void"
+    txna ApplicationArgs 0
+    match bootstrap
+    err
+
+
+// smart_contracts.prediction_market.PredictionMarket.bootstrap[routing]() -> void:
+bootstrap:
+    // prediction_market.py:56
+    // @arc4.abimethod(allow_actions=["NoOp"], create="require")
+    txna ApplicationArgs 1
+    dup
+    len
+    pushint 32
+    ==
+    assert // invalid number of bytes for arc4.static_array<arc4.uint8, 32>
+    txna ApplicationArgs 2
+    dup
+    len
+    pushint 32
+    ==
+    assert // invalid number of bytes for arc4.static_array<arc4.uint8, 32>
+    txna ApplicationArgs 3
+    dup
+    len
+    intc_2 // 8
+    ==
+    assert // invalid number of bytes for arc4.uint64
+    // prediction_market.py:64
+    // self.market_counter.value = UInt64(0)
+    bytec 4 // 0x6d63
+    intc_0 // 0
+    app_global_put
+    // prediction_market.py:65
+    // self.oracle_address.value = oracle.native
+    bytec 6 // 0x6f61
+    uncover 3
+    app_global_put
+    // prediction_market.py:66
+    // self.fee_sink.value = fee_sink.native
+    bytec 9 // 0x6673
+    uncover 2
+    app_global_put
+    // prediction_market.py:67
+    // self.platform_fee_bps.value = fee_bps.native
+    btoi
+    bytec 7 // 0x6662
+    swap
+    app_global_put
+    // prediction_market.py:56
+    // @arc4.abimethod(allow_actions=["NoOp"], create="require")
+    intc_1 // 1
+    return
+
+
+// smart_contracts.prediction_market.PredictionMarket.create_market[routing]() -> void:
+create_market:
+    // prediction_market.py:71
+    // @arc4.abimethod
+    txna ApplicationArgs 1
+    dup
+    intc_0 // 0
+    extract_uint16 // on error: invalid array length header
+    intc_3 // 2
+    +
+    dig 1
+    len
+    dup
+    uncover 2
+    ==
+    assert // invalid number of bytes for arc4.dynamic_array<arc4.uint8>
+    txna ApplicationArgs 2
+    dup
+    intc_0 // 0
+    extract_uint16 // on error: invalid array length header
+    intc_3 // 2
+    +
+    dig 1
+    len
+    dup
+    uncover 2
+    ==
+    assert // invalid number of bytes for arc4.dynamic_array<arc4.uint8>
+    txna ApplicationArgs 3
+    dup
+    intc_0 // 0
+    extract_uint16 // on error: invalid array length header
+    intc_3 // 2
+    +
+    dig 1
+    len
+    dup
+    uncover 2
+    ==
+    assert // invalid number of bytes for arc4.dynamic_array<arc4.uint8>
+    txna ApplicationArgs 4
+    dup
+    intc_0 // 0
+    extract_uint16 // on error: invalid array length header
+    intc_3 // 2
+    +
+    dig 1
+    len
+    dup
+    uncover 2
+    ==
+    assert // invalid number of bytes for arc4.dynamic_array<arc4.uint8>
+    txna ApplicationArgs 5
+    dup
+    intc_0 // 0
+    extract_uint16 // on error: invalid array length header
+    intc_3 // 2
+    +
+    dig 1
+    len
+    ==
+    assert // invalid number of bytes for arc4.dynamic_array<arc4.uint8>
+    txna ApplicationArgs 6
+    dup
+    len
+    intc_1 // 1
+    ==
+    assert // invalid number of bytes for arc4.uint8
+    txna ApplicationArgs 7
+    dup
+    len
+    intc_2 // 8
+    ==
+    assert // invalid number of bytes for arc4.uint64
+    txn GroupIndex
+    intc_1 // 1
+    -
+    dup
+    gtxns TypeEnum
+    intc_1 // pay
+    ==
+    assert // transaction type is pay
+    // prediction_market.py:92-93
+    // # Validate caller sent enough ALGO for the box MBR
+    // assert mbr_payment.receiver == Global.current_application_address, "payment must go to app"
+    dup
+    gtxns Receiver
+    global CurrentApplicationAddress
+    ==
+    assert // payment must go to app
+    // prediction_market.py:94
+    // assert mbr_payment.amount >= UInt64(200_000), "MBR payment too low (min 0.2 ALGO)"
+    gtxns Amount
+    pushint 200000
+    >=
+    assert // MBR payment too low (min 0.2 ALGO)
+    // prediction_market.py:96-97
+    // # Validate timestamps
+    // assert end_timestamp.native > Global.latest_timestamp, "end time must be in future"
+    dup
+    btoi
+    global LatestTimestamp
+    >
+    assert // end time must be in future
+    // prediction_market.py:99-100
+    // # Validate num_outcomes
+    // assert num_outcomes.native >= UInt64(2), "need at least 2 outcomes"
+    dig 1
+    btoi
+    dup
+    intc_3 // 2
+    >=
+    assert // need at least 2 outcomes
+    // prediction_market.py:101
+    // assert num_outcomes.native <= UInt64(4), "max 4 outcomes supported"
+    pushint 4
+    <=
+    assert // max 4 outcomes supported
+    // prediction_market.py:103-104
+    // # Assign market ID
+    // new_id = self.market_counter.value + UInt64(1)
+    intc_0 // 0
+    bytec 4 // 0x6d63
+    app_global_get_ex
+    assert // check self.market_counter exists
+    intc_1 // 1
+    +
+    // prediction_market.py:105
+    // self.market_counter.value = new_id
+    bytec 4 // 0x6d63
+    dig 1
+    app_global_put
+    // prediction_market.py:123
+    // creator=arc4.Address(Txn.sender),
+    txn Sender
+    // prediction_market.py:107-124
+    // # Build market state
+    // market = MarketState(
+    //     title=title,
+    //     outcome_0=outcome_0,
+    //     outcome_1=outcome_1,
+    //     outcome_2=outcome_2,
+    //     outcome_3=outcome_3,
+    //     num_outcomes=num_outcomes,
+    //     end_timestamp=end_timestamp,
+    //     winning_index=arc4.UInt8(255),      # 255 = unsettled
+    //     is_cancelled=arc4.Bool(False),
+    //     pool_0=arc4.UInt64(0),
+    //     pool_1=arc4.UInt64(0),
+    //     pool_2=arc4.UInt64(0),
+    //     pool_3=arc4.UInt64(0),
+    //     total_pool=arc4.UInt64(0),
+    //     creator=arc4.Address(Txn.sender),
+    // )
+    pushint 93
+    uncover 12
+    +
+    dup
+    itob
+    extract 6 2
+    bytec_1 // 0x005d
+    swap
+    concat
+    swap
+    uncover 11
+    +
+    dup
+    itob
+    extract 6 2
+    uncover 2
+    swap
+    concat
+    swap
+    uncover 9
+    +
+    dup
+    itob
+    extract 6 2
+    uncover 2
+    swap
+    concat
+    swap
+    uncover 7
+    +
+    itob
+    extract 6 2
+    concat
+    uncover 4
+    concat
+    uncover 3
+    concat
+    pushbytes 0xff0000000000000000000000000000000000000000000000000000000000000000000000000000000000
+    concat
+    swap
+    concat
+    uncover 6
+    concat
+    uncover 5
+    concat
+    uncover 4
+    concat
+    uncover 3
+    concat
+    uncover 2
+    concat
+    // prediction_market.py:380
+    // return b"mkt" + op.itob(market_id)
+    swap
+    itob
+    bytec_2 // 0x6d6b74
+    dig 1
+    concat
+    // prediction_market.py:128
+    // op.Box.put(box_key, market.bytes)
+    uncover 2
+    box_put
+    // prediction_market.py:71
+    // @arc4.abimethod
+    bytec_3 // 0x151f7c75
+    swap
+    concat
+    log
+    intc_1 // 1
+    return
+
+
+// smart_contracts.prediction_market.PredictionMarket.place_bet[routing]() -> void:
+place_bet:
+    pushbytes ""
+    // prediction_market.py:134
+    // @arc4.abimethod
+    txna ApplicationArgs 1
+    dup
+    len
+    intc_2 // 8
+    ==
+    assert // invalid number of bytes for arc4.uint64
+    txna ApplicationArgs 2
+    dup
+    cover 2
+    dup
+    len
+    intc_1 // 1
+    ==
+    assert // invalid number of bytes for arc4.uint8
+    txn GroupIndex
+    intc_1 // 1
+    -
+    dup
+    gtxns TypeEnum
+    intc_1 // pay
+    ==
+    assert // transaction type is pay
+    // prediction_market.py:147
+    // assert payment.receiver == Global.current_application_address, "pay to app"
+    dup
+    gtxns Receiver
+    global CurrentApplicationAddress
+    ==
+    assert // pay to app
+    // prediction_market.py:148
+    // assert payment.amount >= UInt64(1_000_000), "min bet 1 ALGO"
+    gtxns Amount
+    dup
+    cover 4
+    pushint 1000000
+    >=
+    assert // min bet 1 ALGO
+    // prediction_market.py:150-151
+    // # Load and validate market
+    // market = self._load_market(market_id.native)
+    swap
+    btoi
+    // prediction_market.py:380
+    // return b"mkt" + op.itob(market_id)
+    itob
+    bytec_2 // 0x6d6b74
+    dig 1
+    concat
+    dup
+    cover 4
+    // prediction_market.py:389
+    // raw, exists = op.Box.get(box_key)
+    box_get
+    swap
+    dup
+    cover 2
+    cover 5
+    // prediction_market.py:390
+    // assert exists, "market not found"
+    assert // market not found
+    // prediction_market.py:153
+    // assert not market.is_cancelled.native, "market cancelled"
+    dup
+    intc 4 // 160
+    getbit
+    bytec_0 // 0x00
+    intc_0 // 0
+    uncover 2
+    setbit
+    dup
+    cover 5
+    intc_0 // 0
+    getbit
+    !
+    assert // market cancelled
+    // prediction_market.py:154
+    // assert market.winning_index.native == UInt64(255), "market already settled"
+    dup
+    extract 19 1
+    cover 4
+    dup
+    pushint 19
+    getbyte
+    intc 5 // 255
+    ==
+    assert // market already settled
+    // prediction_market.py:155
+    // assert Global.latest_timestamp < market.end_timestamp.native, "market closed"
+    global LatestTimestamp
+    dig 1
+    extract 11 8
+    cover 5
+    dig 1
+    pushint 11
+    extract_uint64
+    <
+    assert // market closed
+    // prediction_market.py:156
+    // assert option_index.native < market.num_outcomes.native, "invalid option"
+    uncover 2
+    btoi
+    dup
+    cover 4
+    dig 1
+    extract 10 1
+    cover 4
+    swap
+    pushint 10
+    getbyte
+    <
+    assert // invalid option
+    // prediction_market.py:158-159
+    // # Check for existing bet — accumulate if re-betting
+    // bet_key = self._bet_box_key(market_id.native, Txn.sender)
+    txn Sender
+    // prediction_market.py:384
+    // return b"bet" + op.itob(market_id) + bettor.bytes
+    bytec 5 // 0x626574
+    uncover 2
+    concat
+    swap
+    concat
+    dup
+    cover 2
+    // prediction_market.py:160
+    // existing, exists = op.Box.get(bet_key)
+    box_get
+    swap
+    cover 2
+    // prediction_market.py:164
+    // if exists:
+    bz place_bet_else_body@3
+    // prediction_market.py:166
+    // assert old_bet.option_index.native == option_index.native, "cannot change option"
+    dig 1
+    dup
+    intc_0 // 0
+    getbyte
+    dig 6
+    ==
+    assert // cannot change option
+    // prediction_market.py:167
+    // assert not old_bet.claimed.native, "already claimed"
+    dup
+    pushint 72
+    getbit
+    bytec_0 // 0x00
+    intc_0 // 0
+    uncover 2
+    setbit
+    intc_0 // 0
+    getbit
+    !
+    assert // already claimed
+    // prediction_market.py:168
+    // new_amount = old_bet.amount.native + amount
+    intc_1 // 1
+    extract_uint64
+    dig 11
+    +
+    // prediction_market.py:171
+    // amount=arc4.UInt64(new_amount),
+    itob
+    // prediction_market.py:169-173
+    // new_bet = BetRecord(
+    //     option_index=option_index,
+    //     amount=arc4.UInt64(new_amount),
+    //     claimed=arc4.Bool(False),
+    // )
+    concat
+    // prediction_market.py:172
+    // claimed=arc4.Bool(False),
+    bytec_0 // 0x00
+    // prediction_market.py:169-173
+    // new_bet = BetRecord(
+    //     option_index=option_index,
+    //     amount=arc4.UInt64(new_amount),
+    //     claimed=arc4.Bool(False),
+    // )
+    concat
+    // prediction_market.py:174
+    // op.Box.put(bet_key, new_bet.bytes)
+    dig 2
+    swap
+    box_put
+
+place_bet_after_if_else@4:
+    // prediction_market.py:410
+    // new_total = market.total_pool.native + amount
+    dig 7
+    pushint 53
+    extract_uint64
+    dig 10
+    +
+    bury 11
+    // prediction_market.py:411
+    // if idx == UInt64(0):
+    dig 3
+    bnz place_bet_else_body@7
+    // prediction_market.py:413
+    // title=market.title,
+    dig 7
+    dup
+    intc_0 // 0
+    extract_uint16
+    dig 1
+    intc_3 // 2
+    extract_uint16
+    dig 2
+    uncover 2
+    dig 2
+    substring3
+    // prediction_market.py:414
+    // outcome_0=market.outcome_0,
+    dig 2
+    pushint 4
+    extract_uint16
+    dig 3
+    uncover 3
+    dig 2
+    substring3
+    // prediction_market.py:415
+    // outcome_1=market.outcome_1,
+    dig 3
+    pushint 6
+    extract_uint16
+    dig 4
+    uncover 3
+    dig 2
+    substring3
+    // prediction_market.py:416
+    // outcome_2=market.outcome_2,
+    dig 4
+    intc_2 // 8
+    extract_uint16
+    dig 5
+    uncover 3
+    dig 2
+    substring3
+    // prediction_market.py:417
+    // outcome_3=market.outcome_3,
+    dig 5
+    len
+    dig 6
+    uncover 3
+    uncover 2
+    substring3
+    // prediction_market.py:422
+    // pool_0=arc4.UInt64(market.pool_0.native + amount),
+    dig 5
+    pushint 21
+    extract_uint64
+    dig 16
+    +
+    itob
+    // prediction_market.py:423
+    // pool_1=market.pool_1,
+    dig 6
+    extract 29 8
+    // prediction_market.py:424
+    // pool_2=market.pool_2,
+    dig 7
+    extract 37 8
+    // prediction_market.py:425
+    // pool_3=market.pool_3,
+    dig 8
+    extract 45 8
+    // prediction_market.py:426
+    // total_pool=arc4.UInt64(new_total),
+    dig 20
+    itob
+    // prediction_market.py:427
+    // creator=market.creator,
+    uncover 10
+    extract 61 32
+    // prediction_market.py:412-428
+    // return MarketState(
+    //     title=market.title,
+    //     outcome_0=market.outcome_0,
+    //     outcome_1=market.outcome_1,
+    //     outcome_2=market.outcome_2,
+    //     outcome_3=market.outcome_3,
+    //     num_outcomes=market.num_outcomes,
+    //     end_timestamp=market.end_timestamp,
+    //     winning_index=market.winning_index,
+    //     is_cancelled=market.is_cancelled,
+    //     pool_0=arc4.UInt64(market.pool_0.native + amount),
+    //     pool_1=market.pool_1,
+    //     pool_2=market.pool_2,
+    //     pool_3=market.pool_3,
+    //     total_pool=arc4.UInt64(new_total),
+    //     creator=market.creator,
+    // )
+    dig 10
+    len
+    pushint 93
+    +
+    dup
+    itob
+    extract 6 2
+    bytec_1 // 0x005d
+    swap
+    concat
+    dig 11
+    len
+    uncover 2
+    +
+    dup
+    itob
+    extract 6 2
+    uncover 2
+    swap
+    concat
+    dig 10
+    len
+    uncover 2
+    +
+    dup
+    itob
+    extract 6 2
+    uncover 2
+    swap
+    concat
+    dig 9
+    len
+    uncover 2
+    +
+    itob
+    extract 6 2
+    concat
+    dig 14
+    concat
+    dig 16
+    concat
+    dig 17
+    concat
+    dig 18
+    concat
+    uncover 6
+    concat
+    uncover 5
+    concat
+    uncover 4
+    concat
+    uncover 3
+    concat
+    uncover 2
+    concat
+    swap
+    concat
+    uncover 5
+    concat
+    uncover 4
+    concat
+    uncover 3
+    concat
+    uncover 2
+    concat
+    swap
+    concat
+
+place_bet_after_inlined_smart_contracts.prediction_market.PredictionMarket._add_to_pool@12:
+    // prediction_market.py:189
+    // op.Box.put(self._market_box_key(market_id.native), updated_market.bytes)
+    dig 9
+    swap
+    box_put
+    // prediction_market.py:134
+    // @arc4.abimethod
+    intc_1 // 1
+    return
+
+place_bet_else_body@7:
+    // prediction_market.py:429
+    // elif idx == UInt64(1):
+    dig 3
+    intc_1 // 1
+    ==
+    bz place_bet_else_body@9
+    // prediction_market.py:431
+    // title=market.title,
+    dig 7
+    dup
+    intc_0 // 0
+    extract_uint16
+    dig 1
+    intc_3 // 2
+    extract_uint16
+    dig 2
+    uncover 2
+    dig 2
+    substring3
+    // prediction_market.py:432
+    // outcome_0=market.outcome_0,
+    dig 2
+    pushint 4
+    extract_uint16
+    dig 3
+    uncover 3
+    dig 2
+    substring3
+    // prediction_market.py:433
+    // outcome_1=market.outcome_1,
+    dig 3
+    pushint 6
+    extract_uint16
+    dig 4
+    uncover 3
+    dig 2
+    substring3
+    // prediction_market.py:434
+    // outcome_2=market.outcome_2,
+    dig 4
+    intc_2 // 8
+    extract_uint16
+    dig 5
+    uncover 3
+    dig 2
+    substring3
+    // prediction_market.py:435
+    // outcome_3=market.outcome_3,
+    dig 5
+    len
+    dig 6
+    uncover 3
+    uncover 2
+    substring3
+    // prediction_market.py:440
+    // pool_0=market.pool_0,
+    dig 5
+    extract 21 8
+    // prediction_market.py:441
+    // pool_1=arc4.UInt64(market.pool_1.native + amount),
+    dig 6
+    pushint 29
+    extract_uint64
+    dig 17
+    +
+    itob
+    // prediction_market.py:442
+    // pool_2=market.pool_2,
+    dig 7
+    extract 37 8
+    // prediction_market.py:443
+    // pool_3=market.pool_3,
+    dig 8
+    extract 45 8
+    // prediction_market.py:444
+    // total_pool=arc4.UInt64(new_total),
+    dig 20
+    itob
+    // prediction_market.py:445
+    // creator=market.creator,
+    uncover 10
+    extract 61 32
+    // prediction_market.py:430-446
+    // return MarketState(
+    //     title=market.title,
+    //     outcome_0=market.outcome_0,
+    //     outcome_1=market.outcome_1,
+    //     outcome_2=market.outcome_2,
+    //     outcome_3=market.outcome_3,
+    //     num_outcomes=market.num_outcomes,
+    //     end_timestamp=market.end_timestamp,
+    //     winning_index=market.winning_index,
+    //     is_cancelled=market.is_cancelled,
+    //     pool_0=market.pool_0,
+    //     pool_1=arc4.UInt64(market.pool_1.native + amount),
+    //     pool_2=market.pool_2,
+    //     pool_3=market.pool_3,
+    //     total_pool=arc4.UInt64(new_total),
+    //     creator=market.creator,
+    // )
+    dig 10
+    len
+    pushint 93
+    +
+    dup
+    itob
+    extract 6 2
+    bytec_1 // 0x005d
+    swap
+    concat
+    dig 11
+    len
+    uncover 2
+    +
+    dup
+    itob
+    extract 6 2
+    uncover 2
+    swap
+    concat
+    dig 10
+    len
+    uncover 2
+    +
+    dup
+    itob
+    extract 6 2
+    uncover 2
+    swap
+    concat
+    dig 9
+    len
+    uncover 2
+    +
+    itob
+    extract 6 2
+    concat
+    dig 14
+    concat
+    dig 16
+    concat
+    dig 17
+    concat
+    dig 18
+    concat
+    uncover 6
+    concat
+    uncover 5
+    concat
+    uncover 4
+    concat
+    uncover 3
+    concat
+    uncover 2
+    concat
+    swap
+    concat
+    uncover 5
+    concat
+    uncover 4
+    concat
+    uncover 3
+    concat
+    uncover 2
+    concat
+    swap
+    concat
+    // prediction_market.py:187-188
+    // # Update pool tallies
+    // updated_market = self._add_to_pool(market, option_index.native, amount)
+    b place_bet_after_inlined_smart_contracts.prediction_market.PredictionMarket._add_to_pool@12
+
+place_bet_else_body@9:
+    // prediction_market.py:447
+    // elif idx == UInt64(2):
+    dig 3
+    intc_3 // 2
+    ==
+    bz place_bet_else_body@11
+    // prediction_market.py:449
+    // title=market.title,
+    dig 7
+    dup
+    intc_0 // 0
+    extract_uint16
+    dig 1
+    intc_3 // 2
+    extract_uint16
+    dig 2
+    uncover 2
+    dig 2
+    substring3
+    // prediction_market.py:450
+    // outcome_0=market.outcome_0,
+    dig 2
+    pushint 4
+    extract_uint16
+    dig 3
+    uncover 3
+    dig 2
+    substring3
+    // prediction_market.py:451
+    // outcome_1=market.outcome_1,
+    dig 3
+    pushint 6
+    extract_uint16
+    dig 4
+    uncover 3
+    dig 2
+    substring3
+    // prediction_market.py:452
+    // outcome_2=market.outcome_2,
+    dig 4
+    intc_2 // 8
+    extract_uint16
+    dig 5
+    uncover 3
+    dig 2
+    substring3
+    // prediction_market.py:453
+    // outcome_3=market.outcome_3,
+    dig 5
+    len
+    dig 6
+    uncover 3
+    uncover 2
+    substring3
+    // prediction_market.py:458
+    // pool_0=market.pool_0,
+    dig 5
+    extract 21 8
+    // prediction_market.py:459
+    // pool_1=market.pool_1,
+    dig 6
+    extract 29 8
+    // prediction_market.py:460
+    // pool_2=arc4.UInt64(market.pool_2.native + amount),
+    dig 7
+    pushint 37
+    extract_uint64
+    dig 18
+    +
+    itob
+    // prediction_market.py:461
+    // pool_3=market.pool_3,
+    dig 8
+    extract 45 8
+    // prediction_market.py:462
+    // total_pool=arc4.UInt64(new_total),
+    dig 20
+    itob
+    // prediction_market.py:463
+    // creator=market.creator,
+    uncover 10
+    extract 61 32
+    // prediction_market.py:448-464
+    // return MarketState(
+    //     title=market.title,
+    //     outcome_0=market.outcome_0,
+    //     outcome_1=market.outcome_1,
+    //     outcome_2=market.outcome_2,
+    //     outcome_3=market.outcome_3,
+    //     num_outcomes=market.num_outcomes,
+    //     end_timestamp=market.end_timestamp,
+    //     winning_index=market.winning_index,
+    //     is_cancelled=market.is_cancelled,
+    //     pool_0=market.pool_0,
+    //     pool_1=market.pool_1,
+    //     pool_2=arc4.UInt64(market.pool_2.native + amount),
+    //     pool_3=market.pool_3,
+    //     total_pool=arc4.UInt64(new_total),
+    //     creator=market.creator,
+    // )
+    dig 10
+    len
+    pushint 93
+    +
+    dup
+    itob
+    extract 6 2
+    bytec_1 // 0x005d
+    swap
+    concat
+    dig 11
+    len
+    uncover 2
+    +
+    dup
+    itob
+    extract 6 2
+    uncover 2
+    swap
+    concat
+    dig 10
+    len
+    uncover 2
+    +
+    dup
+    itob
+    extract 6 2
+    uncover 2
+    swap
+    concat
+    dig 9
+    len
+    uncover 2
+    +
+    itob
+    extract 6 2
+    concat
+    dig 14
+    concat
+    dig 16
+    concat
+    dig 17
+    concat
+    dig 18
+    concat
+    uncover 6
+    concat
+    uncover 5
+    concat
+    uncover 4
+    concat
+    uncover 3
+    concat
+    uncover 2
+    concat
+    swap
+    concat
+    uncover 5
+    concat
+    uncover 4
+    concat
+    uncover 3
+    concat
+    uncover 2
+    concat
+    swap
+    concat
+    // prediction_market.py:187-188
+    // # Update pool tallies
+    // updated_market = self._add_to_pool(market, option_index.native, amount)
+    b place_bet_after_inlined_smart_contracts.prediction_market.PredictionMarket._add_to_pool@12
+
+place_bet_else_body@11:
+    // prediction_market.py:467
+    // title=market.title,
+    dig 7
+    dup
+    intc_0 // 0
+    extract_uint16
+    dig 1
+    intc_3 // 2
+    extract_uint16
+    dig 2
+    uncover 2
+    dig 2
+    substring3
+    // prediction_market.py:468
+    // outcome_0=market.outcome_0,
+    dig 2
+    pushint 4
+    extract_uint16
+    dig 3
+    uncover 3
+    dig 2
+    substring3
+    // prediction_market.py:469
+    // outcome_1=market.outcome_1,
+    dig 3
+    pushint 6
+    extract_uint16
+    dig 4
+    uncover 3
+    dig 2
+    substring3
+    // prediction_market.py:470
+    // outcome_2=market.outcome_2,
+    dig 4
+    intc_2 // 8
+    extract_uint16
+    dig 5
+    uncover 3
+    dig 2
+    substring3
+    // prediction_market.py:471
+    // outcome_3=market.outcome_3,
+    dig 5
+    len
+    dig 6
+    uncover 3
+    uncover 2
+    substring3
+    // prediction_market.py:476
+    // pool_0=market.pool_0,
+    dig 5
+    extract 21 8
+    // prediction_market.py:477
+    // pool_1=market.pool_1,
+    dig 6
+    extract 29 8
+    // prediction_market.py:478
+    // pool_2=market.pool_2,
+    dig 7
+    extract 37 8
+    // prediction_market.py:479
+    // pool_3=arc4.UInt64(market.pool_3.native + amount),
+    dig 8
+    pushint 45
+    extract_uint64
+    dig 19
+    +
+    itob
+    // prediction_market.py:480
+    // total_pool=arc4.UInt64(new_total),
+    dig 20
+    itob
+    // prediction_market.py:481
+    // creator=market.creator,
+    uncover 10
+    extract 61 32
+    // prediction_market.py:466-482
+    // return MarketState(
+    //     title=market.title,
+    //     outcome_0=market.outcome_0,
+    //     outcome_1=market.outcome_1,
+    //     outcome_2=market.outcome_2,
+    //     outcome_3=market.outcome_3,
+    //     num_outcomes=market.num_outcomes,
+    //     end_timestamp=market.end_timestamp,
+    //     winning_index=market.winning_index,
+    //     is_cancelled=market.is_cancelled,
+    //     pool_0=market.pool_0,
+    //     pool_1=market.pool_1,
+    //     pool_2=market.pool_2,
+    //     pool_3=arc4.UInt64(market.pool_3.native + amount),
+    //     total_pool=arc4.UInt64(new_total),
+    //     creator=market.creator,
+    // )
+    dig 10
+    len
+    pushint 93
+    +
+    dup
+    itob
+    extract 6 2
+    bytec_1 // 0x005d
+    swap
+    concat
+    dig 11
+    len
+    uncover 2
+    +
+    dup
+    itob
+    extract 6 2
+    uncover 2
+    swap
+    concat
+    dig 10
+    len
+    uncover 2
+    +
+    dup
+    itob
+    extract 6 2
+    uncover 2
+    swap
+    concat
+    dig 9
+    len
+    uncover 2
+    +
+    itob
+    extract 6 2
+    concat
+    dig 14
+    concat
+    dig 16
+    concat
+    dig 17
+    concat
+    dig 18
+    concat
+    uncover 6
+    concat
+    uncover 5
+    concat
+    uncover 4
+    concat
+    uncover 3
+    concat
+    uncover 2
+    concat
+    swap
+    concat
+    uncover 5
+    concat
+    uncover 4
+    concat
+    uncover 3
+    concat
+    uncover 2
+    concat
+    swap
+    concat
+    // prediction_market.py:187-188
+    // # Update pool tallies
+    // updated_market = self._add_to_pool(market, option_index.native, amount)
+    b place_bet_after_inlined_smart_contracts.prediction_market.PredictionMarket._add_to_pool@12
+
+place_bet_else_body@3:
+    // prediction_market.py:182
+    // amount=arc4.UInt64(amount),
+    dig 10
+    itob
+    // prediction_market.py:176-184
+    // # Create MBR for bet box — caller must have enough min balance
+    // # (box creation is paid from contract's MBR balance via the mbr_payment
+    // #  in create_market; for bets the extra box cost is small and already
+    // #  covered by the bet amount exceeding 1 ALGO)
+    // new_bet = BetRecord(
+    //     option_index=option_index,
+    //     amount=arc4.UInt64(amount),
+    //     claimed=arc4.Bool(False),
+    // )
+    concat
+    // prediction_market.py:183
+    // claimed=arc4.Bool(False),
+    bytec_0 // 0x00
+    // prediction_market.py:176-184
+    // # Create MBR for bet box — caller must have enough min balance
+    // # (box creation is paid from contract's MBR balance via the mbr_payment
+    // #  in create_market; for bets the extra box cost is small and already
+    // #  covered by the bet amount exceeding 1 ALGO)
+    // new_bet = BetRecord(
+    //     option_index=option_index,
+    //     amount=arc4.UInt64(amount),
+    //     claimed=arc4.Bool(False),
+    // )
+    concat
+    // prediction_market.py:185
+    // op.Box.put(bet_key, new_bet.bytes)
+    dig 2
+    swap
+    box_put
+    b place_bet_after_if_else@4
+
+
+// smart_contracts.prediction_market.PredictionMarket.settle_market[routing]() -> void:
+settle_market:
+    // prediction_market.py:193
+    // @arc4.abimethod
+    txna ApplicationArgs 1
+    dup
+    len
+    intc_2 // 8
+    ==
+    assert // invalid number of bytes for arc4.uint64
+    txna ApplicationArgs 2
+    dup
+    cover 2
+    dup
+    len
+    intc_1 // 1
+    ==
+    assert // invalid number of bytes for arc4.uint8
+    // prediction_market.py:203
+    // assert Txn.sender == self.oracle_address.value, "oracle only"
+    txn Sender
+    intc_0 // 0
+    bytec 6 // 0x6f61
+    app_global_get_ex
+    assert // check self.oracle_address exists
+    ==
+    assert // oracle only
+    // prediction_market.py:205
+    // market = self._load_market(market_id.native)
+    swap
+    btoi
+    // prediction_market.py:380
+    // return b"mkt" + op.itob(market_id)
+    itob
+    bytec_2 // 0x6d6b74
+    swap
+    concat
+    dup
+    cover 2
+    // prediction_market.py:389
+    // raw, exists = op.Box.get(box_key)
+    box_get
+    swap
+    dup
+    cover 2
+    cover 3
+    // prediction_market.py:390
+    // assert exists, "market not found"
+    assert // market not found
+    // prediction_market.py:206
+    // assert not market.is_cancelled.native, "cancelled"
+    dup
+    intc 4 // 160
+    getbit
+    bytec_0 // 0x00
+    intc_0 // 0
+    uncover 2
+    setbit
+    dup
+    cover 3
+    intc_0 // 0
+    getbit
+    !
+    assert // cancelled
+    // prediction_market.py:207
+    // assert market.winning_index.native == UInt64(255), "already settled"
+    dup
+    pushint 19
+    getbyte
+    intc 5 // 255
+    ==
+    assert // already settled
+    // prediction_market.py:208
+    // assert winning_index.native < market.num_outcomes.native, "bad winning index"
+    swap
+    btoi
+    dig 1
+    extract 10 1
+    cover 2
+    dig 1
+    pushint 10
+    getbyte
+    <
+    assert // bad winning index
+    // prediction_market.py:210-211
+    // # Take platform fee
+    // total = market.total_pool.native
+    dup
+    extract 53 8
+    swap
+    pushint 53
+    extract_uint64
+    // prediction_market.py:212
+    // fee_bps = self.platform_fee_bps.value
+    intc_0 // 0
+    bytec 7 // 0x6662
+    app_global_get_ex
+    assert // check self.platform_fee_bps exists
+    // prediction_market.py:213
+    // fee_amount = (total * fee_bps) // UInt64(10_000)
+    *
+    pushint 10000
+    /
+    dup
+    // prediction_market.py:215
+    // if fee_amount > UInt64(0):
+    bz settle_market_after_if_else@4
+    // prediction_market.py:216-220
+    // itxn.Payment(
+    //     receiver=self.fee_sink.value,
+    //     amount=fee_amount,
+    //     fee=Global.min_txn_fee,
+    // ).submit()
+    itxn_begin
+    // prediction_market.py:219
+    // fee=Global.min_txn_fee,
+    global MinTxnFee
+    // prediction_market.py:217
+    // receiver=self.fee_sink.value,
+    intc_0 // 0
+    bytec 9 // 0x6673
+    app_global_get_ex
+    assert // check self.fee_sink exists
+    dig 2
+    itxn_field Amount
+    itxn_field Receiver
+    // prediction_market.py:216
+    // itxn.Payment(
+    intc_1 // pay
+    itxn_field TypeEnum
+    itxn_field Fee
+    // prediction_market.py:216-220
+    // itxn.Payment(
+    //     receiver=self.fee_sink.value,
+    //     amount=fee_amount,
+    //     fee=Global.min_txn_fee,
+    // ).submit()
+    itxn_submit
+
+settle_market_after_if_else@4:
+    // prediction_market.py:224
+    // title=market.title,
+    dig 4
+    dup
+    intc_0 // 0
+    extract_uint16
+    dig 1
+    intc_3 // 2
+    extract_uint16
+    dig 2
+    uncover 2
+    dig 2
+    substring3
+    // prediction_market.py:225
+    // outcome_0=market.outcome_0,
+    dig 2
+    pushint 4
+    extract_uint16
+    dig 3
+    uncover 3
+    dig 2
+    substring3
+    // prediction_market.py:226
+    // outcome_1=market.outcome_1,
+    dig 3
+    pushint 6
+    extract_uint16
+    dig 4
+    uncover 3
+    dig 2
+    substring3
+    // prediction_market.py:227
+    // outcome_2=market.outcome_2,
+    dig 4
+    intc_2 // 8
+    extract_uint16
+    dig 5
+    uncover 3
+    dig 2
+    substring3
+    // prediction_market.py:228
+    // outcome_3=market.outcome_3,
+    dig 5
+    len
+    dig 6
+    uncover 3
+    uncover 2
+    substring3
+    // prediction_market.py:230
+    // end_timestamp=market.end_timestamp,
+    dig 5
+    extract 11 8
+    // prediction_market.py:233
+    // pool_0=market.pool_0,
+    dig 6
+    extract 21 8
+    // prediction_market.py:234
+    // pool_1=market.pool_1,
+    dig 7
+    extract 29 8
+    // prediction_market.py:235
+    // pool_2=market.pool_2,
+    dig 8
+    extract 37 8
+    // prediction_market.py:236
+    // pool_3=market.pool_3,
+    dig 9
+    extract 45 8
+    // prediction_market.py:238
+    // creator=market.creator,
+    uncover 10
+    extract 61 32
+    // prediction_market.py:222-239
+    // # Write settled market back to box
+    // settled = MarketState(
+    //     title=market.title,
+    //     outcome_0=market.outcome_0,
+    //     outcome_1=market.outcome_1,
+    //     outcome_2=market.outcome_2,
+    //     outcome_3=market.outcome_3,
+    //     num_outcomes=market.num_outcomes,
+    //     end_timestamp=market.end_timestamp,
+    //     winning_index=winning_index,
+    //     is_cancelled=market.is_cancelled,
+    //     pool_0=market.pool_0,
+    //     pool_1=market.pool_1,
+    //     pool_2=market.pool_2,
+    //     pool_3=market.pool_3,
+    //     total_pool=market.total_pool,
+    //     creator=market.creator,
+    // )
+    dig 10
+    len
+    pushint 93
+    +
+    dup
+    itob
+    extract 6 2
+    bytec_1 // 0x005d
+    swap
+    concat
+    dig 11
+    len
+    uncover 2
+    +
+    dup
+    itob
+    extract 6 2
+    uncover 2
+    swap
+    concat
+    dig 10
+    len
+    uncover 2
+    +
+    dup
+    itob
+    extract 6 2
+    uncover 2
+    swap
+    concat
+    dig 9
+    len
+    uncover 2
+    +
+    itob
+    extract 6 2
+    concat
+    dig 14
+    concat
+    uncover 6
+    concat
+    dig 17
+    concat
+    dig 14
+    concat
+    uncover 5
+    concat
+    uncover 4
+    concat
+    uncover 3
+    concat
+    uncover 2
+    concat
+    dig 8
+    concat
+    swap
+    concat
+    uncover 5
+    concat
+    uncover 4
+    concat
+    uncover 3
+    concat
+    uncover 2
+    concat
+    swap
+    concat
+    // prediction_market.py:240
+    // op.Box.put(self._market_box_key(market_id.native), settled.bytes)
+    dig 6
+    swap
+    box_put
+    // prediction_market.py:193
+    // @arc4.abimethod
+    intc_1 // 1
+    return
+
+
+// smart_contracts.prediction_market.PredictionMarket.cancel_market[routing]() -> void:
+cancel_market:
+    // prediction_market.py:244
+    // @arc4.abimethod
+    txna ApplicationArgs 1
+    dup
+    len
+    intc_2 // 8
+    ==
+    assert // invalid number of bytes for arc4.uint64
+    // prediction_market.py:250
+    // market = self._load_market(market_id.native)
+    btoi
+    // prediction_market.py:380
+    // return b"mkt" + op.itob(market_id)
+    itob
+    bytec_2 // 0x6d6b74
+    swap
+    concat
+    dup
+    // prediction_market.py:389
+    // raw, exists = op.Box.get(box_key)
+    box_get
+    swap
+    dup
+    uncover 2
+    // prediction_market.py:390
+    // assert exists, "market not found"
+    assert // market not found
+    // prediction_market.py:252
+    // Txn.sender == market.creator.native
+    txn Sender
+    swap
+    extract 61 32
+    dup
+    cover 2
+    ==
+    // prediction_market.py:252-253
+    // Txn.sender == market.creator.native
+    // or Txn.sender == self.oracle_address.value
+    bnz cancel_market_bool_true@3
+    // prediction_market.py:253
+    // or Txn.sender == self.oracle_address.value
+    txn Sender
+    intc_0 // 0
+    bytec 6 // 0x6f61
+    app_global_get_ex
+    assert // check self.oracle_address exists
+    ==
+    // prediction_market.py:252-253
+    // Txn.sender == market.creator.native
+    // or Txn.sender == self.oracle_address.value
+    bz cancel_market_bool_false@4
+
+cancel_market_bool_true@3:
+    intc_1 // 1
+
+cancel_market_bool_merge@5:
+    // prediction_market.py:251-254
+    // assert (
+    //     Txn.sender == market.creator.native
+    //     or Txn.sender == self.oracle_address.value
+    // ), "not authorised"
+    assert // not authorised
+    // prediction_market.py:255
+    // assert market.winning_index.native == UInt64(255), "already settled"
+    dig 1
+    dup
+    extract 19 1
+    dig 1
+    pushint 19
+    getbyte
+    intc 5 // 255
+    ==
+    assert // already settled
+    // prediction_market.py:258
+    // title=market.title,
+    dig 1
+    intc_0 // 0
+    extract_uint16
+    dig 2
+    intc_3 // 2
+    extract_uint16
+    dig 3
+    uncover 2
+    dig 2
+    substring3
+    // prediction_market.py:259
+    // outcome_0=market.outcome_0,
+    dig 3
+    pushint 4
+    extract_uint16
+    dig 4
+    uncover 3
+    dig 2
+    substring3
+    // prediction_market.py:260
+    // outcome_1=market.outcome_1,
+    dig 4
+    pushint 6
+    extract_uint16
+    dig 5
+    uncover 3
+    dig 2
+    substring3
+    // prediction_market.py:261
+    // outcome_2=market.outcome_2,
+    dig 5
+    intc_2 // 8
+    extract_uint16
+    dig 6
+    uncover 3
+    dig 2
+    substring3
+    // prediction_market.py:262
+    // outcome_3=market.outcome_3,
+    dig 6
+    len
+    dig 7
+    uncover 3
+    uncover 2
+    substring3
+    // prediction_market.py:263
+    // num_outcomes=market.num_outcomes,
+    dig 6
+    extract 10 1
+    // prediction_market.py:264
+    // end_timestamp=market.end_timestamp,
+    dig 7
+    extract 11 8
+    // prediction_market.py:267
+    // pool_0=market.pool_0,
+    dig 8
+    extract 21 8
+    // prediction_market.py:268
+    // pool_1=market.pool_1,
+    dig 9
+    extract 29 8
+    // prediction_market.py:269
+    // pool_2=market.pool_2,
+    dig 10
+    extract 37 8
+    // prediction_market.py:270
+    // pool_3=market.pool_3,
+    dig 11
+    extract 45 8
+    // prediction_market.py:271
+    // total_pool=market.total_pool,
+    uncover 12
+    extract 53 8
+    // prediction_market.py:257-273
+    // cancelled = MarketState(
+    //     title=market.title,
+    //     outcome_0=market.outcome_0,
+    //     outcome_1=market.outcome_1,
+    //     outcome_2=market.outcome_2,
+    //     outcome_3=market.outcome_3,
+    //     num_outcomes=market.num_outcomes,
+    //     end_timestamp=market.end_timestamp,
+    //     winning_index=market.winning_index,
+    //     is_cancelled=arc4.Bool(True),
+    //     pool_0=market.pool_0,
+    //     pool_1=market.pool_1,
+    //     pool_2=market.pool_2,
+    //     pool_3=market.pool_3,
+    //     total_pool=market.total_pool,
+    //     creator=market.creator,
+    // )
+    dig 11
+    len
+    pushint 93
+    +
+    dup
+    itob
+    extract 6 2
+    bytec_1 // 0x005d
+    swap
+    concat
+    dig 12
+    len
+    uncover 2
+    +
+    dup
+    itob
+    extract 6 2
+    uncover 2
+    swap
+    concat
+    dig 11
+    len
+    uncover 2
+    +
+    dup
+    itob
+    extract 6 2
+    uncover 2
+    swap
+    concat
+    dig 10
+    len
+    uncover 2
+    +
+    itob
+    extract 6 2
+    concat
+    uncover 7
+    concat
+    uncover 6
+    concat
+    uncover 11
+    concat
+    // prediction_market.py:266
+    // is_cancelled=arc4.Bool(True),
+    bytec 8 // 0x80
+    // prediction_market.py:257-273
+    // cancelled = MarketState(
+    //     title=market.title,
+    //     outcome_0=market.outcome_0,
+    //     outcome_1=market.outcome_1,
+    //     outcome_2=market.outcome_2,
+    //     outcome_3=market.outcome_3,
+    //     num_outcomes=market.num_outcomes,
+    //     end_timestamp=market.end_timestamp,
+    //     winning_index=market.winning_index,
+    //     is_cancelled=arc4.Bool(True),
+    //     pool_0=market.pool_0,
+    //     pool_1=market.pool_1,
+    //     pool_2=market.pool_2,
+    //     pool_3=market.pool_3,
+    //     total_pool=market.total_pool,
+    //     creator=market.creator,
+    // )
+    concat
+    uncover 5
+    concat
+    uncover 4
+    concat
+    uncover 3
+    concat
+    uncover 2
+    concat
+    swap
+    concat
+    dig 6
+    concat
+    uncover 5
+    concat
+    uncover 4
+    concat
+    uncover 3
+    concat
+    uncover 2
+    concat
+    swap
+    concat
+    // prediction_market.py:274
+    // op.Box.put(self._market_box_key(market_id.native), cancelled.bytes)
+    dig 3
+    swap
+    box_put
+    // prediction_market.py:244
+    // @arc4.abimethod
+    intc_1 // 1
+    return
+
+cancel_market_bool_false@4:
+    intc_0 // 0
+    b cancel_market_bool_merge@5
+
+
+// smart_contracts.prediction_market.PredictionMarket.claim_winnings[routing]() -> void:
+claim_winnings:
+    // prediction_market.py:278
+    // @arc4.abimethod
+    txna ApplicationArgs 1
+    dup
+    len
+    intc_2 // 8
+    ==
+    assert // invalid number of bytes for arc4.uint64
+    // prediction_market.py:285
+    // market = self._load_market(market_id.native)
+    btoi
+    // prediction_market.py:380
+    // return b"mkt" + op.itob(market_id)
+    itob
+    bytec_2 // 0x6d6b74
+    dig 1
+    concat
+    // prediction_market.py:389
+    // raw, exists = op.Box.get(box_key)
+    box_get
+    swap
+    dup
+    cover 2
+    cover 3
+    // prediction_market.py:390
+    // assert exists, "market not found"
+    assert // market not found
+    // prediction_market.py:286
+    // assert not market.is_cancelled.native, "use claim_refund for cancelled markets"
+    dup
+    intc 4 // 160
+    getbit
+    bytec_0 // 0x00
+    intc_0 // 0
+    uncover 2
+    setbit
+    intc_0 // 0
+    getbit
+    !
+    assert // use claim_refund for cancelled markets
+    // prediction_market.py:287
+    // assert market.winning_index.native != UInt64(255), "not settled yet"
+    pushint 19
+    getbyte
+    dup
+    cover 2
+    dup
+    intc 5 // 255
+    !=
+    assert // not settled yet
+    // prediction_market.py:289
+    // bet_key = self._bet_box_key(market_id.native, Txn.sender)
+    txn Sender
+    // prediction_market.py:384
+    // return b"bet" + op.itob(market_id) + bettor.bytes
+    bytec 5 // 0x626574
+    uncover 3
+    concat
+    swap
+    concat
+    dup
+    cover 2
+    // prediction_market.py:290
+    // raw_bet, exists = op.Box.get(bet_key)
+    box_get
+    swap
+    dup
+    cover 2
+    cover 3
+    // prediction_market.py:291
+    // assert exists, "no bet found"
+    assert // no bet found
+    // prediction_market.py:294
+    // assert not bet.claimed.native, "already claimed"
+    dup
+    pushint 72
+    getbit
+    bytec_0 // 0x00
+    intc_0 // 0
+    uncover 2
+    setbit
+    intc_0 // 0
+    getbit
+    !
+    assert // already claimed
+    // prediction_market.py:295
+    // assert bet.option_index.native == market.winning_index.native, "not a winner"
+    dup
+    extract 0 1
+    cover 2
+    intc_0 // 0
+    getbyte
+    dig 1
+    ==
+    assert // not a winner
+    // prediction_market.py:396
+    // if idx == UInt64(0):
+    bnz claim_winnings_else_body@3
+    // prediction_market.py:397
+    // pool_value = market.pool_0.native
+    dig 4
+    pushint 21
+    extract_uint64
+
+claim_winnings_after_if_else@10:
+    // prediction_market.py:299
+    // assert winning_pool > UInt64(0), "zero winning pool"
+    dup
+    assert // zero winning pool
+    // prediction_market.py:301
+    // total = market.total_pool.native
+    dig 5
+    pushint 53
+    extract_uint64
+    // prediction_market.py:302
+    // fee_bps = self.platform_fee_bps.value
+    intc_0 // 0
+    bytec 7 // 0x6662
+    app_global_get_ex
+    assert // check self.platform_fee_bps exists
+    // prediction_market.py:303
+    // net_pool = total - (total * fee_bps // UInt64(10_000))
+    dig 1
+    *
+    pushint 10000
+    /
+    -
+    // prediction_market.py:304
+    // payout = (bet.amount.native * net_pool) // winning_pool
+    dig 3
+    dup
+    extract 1 8
+    swap
+    intc_1 // 1
+    extract_uint64
+    uncover 2
+    *
+    uncover 2
+    /
+    // prediction_market.py:306-311
+    // # Mark as claimed
+    // claimed_bet = BetRecord(
+    //     option_index=bet.option_index,
+    //     amount=bet.amount,
+    //     claimed=arc4.Bool(True),
+    // )
+    dig 2
+    uncover 2
+    concat
+    // prediction_market.py:310
+    // claimed=arc4.Bool(True),
+    bytec 8 // 0x80
+    // prediction_market.py:306-311
+    // # Mark as claimed
+    // claimed_bet = BetRecord(
+    //     option_index=bet.option_index,
+    //     amount=bet.amount,
+    //     claimed=arc4.Bool(True),
+    // )
+    concat
+    // prediction_market.py:312
+    // op.Box.put(bet_key, claimed_bet.bytes)
+    dig 4
+    swap
+    box_put
+    // prediction_market.py:314-319
+    // # Send payout
+    // itxn.Payment(
+    //     receiver=Txn.sender,
+    //     amount=payout,
+    //     fee=Global.min_txn_fee,
+    // ).submit()
+    itxn_begin
+    // prediction_market.py:318
+    // fee=Global.min_txn_fee,
+    global MinTxnFee
+    // prediction_market.py:316
+    // receiver=Txn.sender,
+    txn Sender
+    dig 2
+    itxn_field Amount
+    itxn_field Receiver
+    // prediction_market.py:314-315
+    // # Send payout
+    // itxn.Payment(
+    intc_1 // pay
+    itxn_field TypeEnum
+    itxn_field Fee
+    // prediction_market.py:314-319
+    // # Send payout
+    // itxn.Payment(
+    //     receiver=Txn.sender,
+    //     amount=payout,
+    //     fee=Global.min_txn_fee,
+    // ).submit()
+    itxn_submit
+    // prediction_market.py:321
+    // return arc4.UInt64(payout)
+    itob
+    // prediction_market.py:278
+    // @arc4.abimethod
+    bytec_3 // 0x151f7c75
+    swap
+    concat
+    log
+    intc_1 // 1
+    return
+
+claim_winnings_else_body@3:
+    // prediction_market.py:398
+    // elif idx == UInt64(1):
+    dig 3
+    intc_1 // 1
+    ==
+    bz claim_winnings_else_body@5
+    // prediction_market.py:399
+    // pool_value = market.pool_1.native
+    dig 4
+    pushint 29
+    extract_uint64
+    b claim_winnings_after_if_else@10
+
+claim_winnings_else_body@5:
+    // prediction_market.py:400
+    // elif idx == UInt64(2):
+    dig 3
+    intc_3 // 2
+    ==
+    bz claim_winnings_else_body@7
+    // prediction_market.py:401
+    // pool_value = market.pool_2.native
+    dig 4
+    pushint 37
+    extract_uint64
+    b claim_winnings_after_if_else@10
+
+claim_winnings_else_body@7:
+    // prediction_market.py:403
+    // pool_value = market.pool_3.native
+    dig 4
+    pushint 45
+    extract_uint64
+    b claim_winnings_after_if_else@10
+
+
+// smart_contracts.prediction_market.PredictionMarket.claim_refund[routing]() -> void:
+claim_refund:
+    // prediction_market.py:325
+    // @arc4.abimethod
+    txna ApplicationArgs 1
+    dup
+    len
+    intc_2 // 8
+    ==
+    assert // invalid number of bytes for arc4.uint64
+    // prediction_market.py:330
+    // market = self._load_market(market_id.native)
+    btoi
+    // prediction_market.py:380
+    // return b"mkt" + op.itob(market_id)
+    itob
+    bytec_2 // 0x6d6b74
+    dig 1
+    concat
+    // prediction_market.py:389
+    // raw, exists = op.Box.get(box_key)
+    box_get
+    // prediction_market.py:390
+    // assert exists, "market not found"
+    assert // market not found
+    // prediction_market.py:331
+    // assert market.is_cancelled.native, "market not cancelled"
+    intc 4 // 160
+    getbit
+    bytec_0 // 0x00
+    intc_0 // 0
+    uncover 2
+    setbit
+    intc_0 // 0
+    getbit
+    assert // market not cancelled
+    // prediction_market.py:333
+    // bet_key = self._bet_box_key(market_id.native, Txn.sender)
+    txn Sender
+    // prediction_market.py:384
+    // return b"bet" + op.itob(market_id) + bettor.bytes
+    bytec 5 // 0x626574
+    uncover 2
+    concat
+    swap
+    concat
+    // prediction_market.py:334
+    // raw_bet, exists = op.Box.get(bet_key)
+    dup
+    box_get
+    // prediction_market.py:335
+    // assert exists, "no bet found"
+    assert // no bet found
+    // prediction_market.py:338
+    // assert not bet.claimed.native, "already claimed"
+    dup
+    pushint 72
+    getbit
+    bytec_0 // 0x00
+    intc_0 // 0
+    uncover 2
+    setbit
+    intc_0 // 0
+    getbit
+    !
+    assert // already claimed
+    // prediction_market.py:340
+    // refund = bet.amount.native
+    dup
+    extract 1 8
+    dig 1
+    intc_1 // 1
+    extract_uint64
+    // prediction_market.py:343
+    // option_index=bet.option_index,
+    uncover 2
+    extract 0 1
+    // prediction_market.py:342-346
+    // claimed_bet = BetRecord(
+    //     option_index=bet.option_index,
+    //     amount=bet.amount,
+    //     claimed=arc4.Bool(True),
+    // )
+    dig 2
+    concat
+    // prediction_market.py:345
+    // claimed=arc4.Bool(True),
+    bytec 8 // 0x80
+    // prediction_market.py:342-346
+    // claimed_bet = BetRecord(
+    //     option_index=bet.option_index,
+    //     amount=bet.amount,
+    //     claimed=arc4.Bool(True),
+    // )
+    concat
+    // prediction_market.py:347
+    // op.Box.put(bet_key, claimed_bet.bytes)
+    uncover 3
+    swap
+    box_put
+    // prediction_market.py:349-353
+    // itxn.Payment(
+    //     receiver=Txn.sender,
+    //     amount=refund,
+    //     fee=Global.min_txn_fee,
+    // ).submit()
+    itxn_begin
+    // prediction_market.py:352
+    // fee=Global.min_txn_fee,
+    global MinTxnFee
+    // prediction_market.py:350
+    // receiver=Txn.sender,
+    txn Sender
+    uncover 2
+    itxn_field Amount
+    itxn_field Receiver
+    // prediction_market.py:349
+    // itxn.Payment(
+    intc_1 // pay
+    itxn_field TypeEnum
+    itxn_field Fee
+    // prediction_market.py:349-353
+    // itxn.Payment(
+    //     receiver=Txn.sender,
+    //     amount=refund,
+    //     fee=Global.min_txn_fee,
+    // ).submit()
+    itxn_submit
+    // prediction_market.py:325
+    // @arc4.abimethod
+    bytec_3 // 0x151f7c75
+    swap
+    concat
+    log
+    intc_1 // 1
+    return
+
+
+// smart_contracts.prediction_market.PredictionMarket.get_market[routing]() -> void:
+get_market:
+    // prediction_market.py:359
+    // @arc4.abimethod(readonly=True)
+    txna ApplicationArgs 1
+    dup
+    len
+    intc_2 // 8
+    ==
+    assert // invalid number of bytes for arc4.uint64
+    // prediction_market.py:361
+    // return self._load_market(market_id.native)
+    btoi
+    // prediction_market.py:380
+    // return b"mkt" + op.itob(market_id)
+    itob
+    bytec_2 // 0x6d6b74
+    swap
+    concat
+    // prediction_market.py:389
+    // raw, exists = op.Box.get(box_key)
+    box_get
+    // prediction_market.py:390
+    // assert exists, "market not found"
+    assert // market not found
+    // prediction_market.py:359
+    // @arc4.abimethod(readonly=True)
+    bytec_3 // 0x151f7c75
+    swap
+    concat
+    log
+    intc_1 // 1
+    return
+
+
+// smart_contracts.prediction_market.PredictionMarket.get_bet[routing]() -> void:
+get_bet:
+    // prediction_market.py:363
+    // @arc4.abimethod(readonly=True)
+    txna ApplicationArgs 1
+    dup
+    len
+    intc_2 // 8
+    ==
+    assert // invalid number of bytes for arc4.uint64
+    txna ApplicationArgs 2
+    dup
+    len
+    pushint 32
+    ==
+    assert // invalid number of bytes for arc4.static_array<arc4.uint8, 32>
+    // prediction_market.py:367
+    // bet_key = self._bet_box_key(market_id.native, bettor.native)
+    swap
+    btoi
+    // prediction_market.py:384
+    // return b"bet" + op.itob(market_id) + bettor.bytes
+    itob
+    bytec 5 // 0x626574
+    swap
+    concat
+    swap
+    concat
+    // prediction_market.py:368
+    // raw, exists = op.Box.get(bet_key)
+    box_get
+    // prediction_market.py:369
+    // assert exists, "no bet"
+    assert // no bet
+    // prediction_market.py:363
+    // @arc4.abimethod(readonly=True)
+    bytec_3 // 0x151f7c75
+    swap
+    concat
+    log
+    intc_1 // 1
+    return
+
+
+// smart_contracts.prediction_market.PredictionMarket.get_market_count[routing]() -> void:
+get_market_count:
+    // prediction_market.py:374
+    // return arc4.UInt64(self.market_counter.value)
+    intc_0 // 0
+    bytec 4 // 0x6d63
+    app_global_get_ex
+    assert // check self.market_counter exists
+    itob
+    // prediction_market.py:372
+    // @arc4.abimethod(readonly=True)
+    bytec_3 // 0x151f7c75
+    swap
+    concat
+    log
+    intc_1 // 1
+    return

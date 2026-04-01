@@ -1,22 +1,219 @@
-# prediction-market
+# Algorand Prediction Market
 
-Welcome to your new AlgoKit project!
+A full-stack decentralized prediction market platform built on Algorand TestNet. Users can create markets, place bets on outcomes, and claim winnings when markets settle.
 
-This is your workspace root. A `workspace` in AlgoKit is an orchestrated collection of standalone projects (backends, smart contracts, frontend apps and etc).
+## Architecture
 
-By default, `projects_root_path` parameter is set to `projects`. Which instructs AlgoKit CLI to create a new directory under `projects` directory when new project is instantiated via `algokit init` at the root of the workspace.
+### Smart Contracts (AlgoPy)
+- **PredictionMarket**: Core contract managing markets, bets, and payouts
+- **PredictionOracle**: Multi-source oracle for trustless market settlement
 
-## Getting Started
+### Frontend (Next.js 15)
+- Modern React application with Pera Wallet integration
+- Real-time market data and live odds calculation
+- Responsive UI with Tailwind CSS and Recharts
 
-To get started refer to `README.md` files in respective sub-projects in the `projects` directory.
+## Features
 
-To learn more about algokit, visit [documentation](https://github.com/algorandfoundation/algokit-cli/blob/main/docs/algokit.md).
+✅ Create custom prediction markets with 2-4 outcomes  
+✅ Place bets using ALGO cryptocurrency  
+✅ Automated odds calculation based on pool distribution  
+✅ Multi-source oracle for decentralized settlement  
+✅ Claim winnings or refunds through smart contracts  
+✅ Real-time price feeds and market countdowns  
+✅ LORA Explorer integration for transaction tracking  
+✅ Box storage for efficient on-chain data management  
 
-### GitHub Codespaces
+## Project Structure
 
-To get started execute:
+```
+prediction-market/
+├── projects/prediction-market/
+│   └── smart_contracts/          # AlgoPy smart contracts
+│       ├── prediction_market.py  # Main market contract
+│       ├── oracle.py             # Oracle contract
+│       ├── deploy_config.py      # Deployment script
+│       └── tests/                # Contract tests
+└── frontend/                     # Next.js application
+    ├── src/
+    │   ├── app/                  # App Router pages
+    │   ├── components/           # React components
+    │   ├── hooks/                # Custom hooks
+    │   ├── lib/                  # Core services
+    │   └── types/                # TypeScript types
+    └── package.json
+```
 
-1. `algokit generate devcontainer` - invoking this command from the root of this repository will create a `devcontainer.json` file with all the configuration needed to run this project in a GitHub codespace. [Run the repository inside a codespace](https://docs.github.com/en/codespaces/getting-started/quickstart) to get started.
-2. `algokit init` - invoke this command inside a github codespace to launch an interactive wizard to guide you through the process of creating a new AlgoKit project
+## Quick Start
 
-Powered by [Copier templates](https://copier.readthedocs.io/en/stable/).
+### 1. Deploy Smart Contracts
+
+```bash
+cd projects/prediction-market
+
+# Install dependencies
+poetry install
+
+# Compile contracts
+algokit compile python
+
+# Deploy to TestNet
+algokit deploy
+```
+
+Note the deployed App IDs from the output.
+
+### 2. Setup Frontend
+
+```bash
+cd frontend
+
+# Install dependencies
+npm install
+
+# Configure environment
+cp .env.local.example .env.local
+# Edit .env.local with your App IDs
+
+# Run development server
+npm run dev
+```
+
+### 3. Connect Wallet
+
+1. Install [Pera Wallet](https://perawallet.app/)
+2. Switch to TestNet in wallet settings
+3. Get TestNet ALGO from [dispenser](https://bank.testnet.algorand.network/)
+4. Connect wallet in the app
+
+## Smart Contract Details
+
+### PredictionMarket Contract
+
+**Key Methods:**
+- `bootstrap()`: Initialize contract with oracle and fee settings
+- `create_market()`: Create a new prediction market
+- `place_bet()`: Place a bet on a market outcome
+- `settle_market()`: Oracle-only method to finalize market
+- `claim_winnings()`: Claim payout for winning bets
+- `claim_refund()`: Claim refund for cancelled markets
+- `cancel_market()`: Cancel market (creator/oracle only)
+
+**Storage:**
+- Global state: market counter, oracle address, fee configuration
+- Box storage: market data and individual bet records
+
+### PredictionOracle Contract
+
+**Key Methods:**
+- `bootstrap()`: Initialize with market app ID and providers
+- `submit_attestation()`: Providers submit outcome votes
+- `update_quorum()`: Admin adjusts quorum threshold
+
+**Consensus:**
+- Requires quorum of provider attestations
+- Automatically settles market when quorum reached
+- Supports up to 8 whitelisted providers
+
+## Market Lifecycle
+
+1. **Creation**: User creates market with title, outcomes, and end time
+2. **Betting**: Users place bets on outcomes (min 1 ALGO)
+3. **Closing**: Market closes at end timestamp
+4. **Settlement**: Oracle providers submit attestations
+5. **Payout**: Winners claim proportional share of pool (minus 2% fee)
+
+## Odds Calculation
+
+Odds are calculated using a parimutuel system:
+
+```
+Odds for outcome X = Total Pool / Pool for outcome X
+Payout = (Bet Amount / Winning Pool) × (Total Pool × 0.98)
+```
+
+The 2% platform fee is sent to the fee sink address.
+
+## Development
+
+### Smart Contracts
+
+```bash
+# Compile
+algokit compile python
+
+# Run tests
+pytest smart_contracts/tests/
+
+# Deploy to LocalNet
+algokit localnet start
+algokit deploy --network localnet
+```
+
+### Frontend
+
+```bash
+# Development
+npm run dev
+
+# Type checking
+npm run build
+
+# Linting
+npm run lint
+```
+
+## Testing on TestNet
+
+1. Deploy contracts and note App IDs
+2. Update frontend `.env.local` with App IDs
+3. Connect Pera Wallet (TestNet mode)
+4. Create a test market
+5. Place bets from multiple accounts
+6. Submit oracle attestation to settle
+7. Claim winnings
+
+## Security Considerations
+
+- Smart contracts use ARC-4 for standardized encoding
+- Box storage prevents state bloat
+- Oracle requires quorum for settlement
+- Platform fee prevents zero-sum attacks
+- Minimum bet amount (1 ALGO) prevents spam
+
+## Deployment Checklist
+
+- [ ] Compile smart contracts without errors
+- [ ] Deploy PredictionMarket contract
+- [ ] Deploy PredictionOracle contract
+- [ ] Fund market contract with ALGO for inner txns
+- [ ] Update frontend environment variables
+- [ ] Test market creation
+- [ ] Test betting flow
+- [ ] Test oracle settlement
+- [ ] Test claiming winnings
+- [ ] Verify transactions on LORA Explorer
+
+## Resources
+
+- [Algorand Developer Portal](https://developer.algorand.org/)
+- [AlgoPy Documentation](https://algorandfoundation.github.io/puya/)
+- [Pera Wallet](https://perawallet.app/)
+- [LORA Explorer](https://lora.algokit.io/)
+- [TestNet Dispenser](https://bank.testnet.algorand.network/)
+
+## License
+
+MIT
+
+## Support
+
+For issues or questions:
+1. Check the frontend and smart contract READMEs
+2. Review LORA Explorer for transaction details
+3. Verify environment configuration
+4. Check browser console for errors
+
+---
+
+Built with ❤️ using Algorand, AlgoPy, and Next.js

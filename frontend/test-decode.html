@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Market Decoding</title>
+</head>
+<body>
+    <h1>Test Market Decoding</h1>
+    <pre id="output"></pre>
+    
+    <script>
+        // Raw box data from TestNet (126 bytes)
+        const hexData = "005d00710076007a007c020000000069cc2310ff00000000000000000000000000000000000000000000000000000000000000000000000000000000dc5531ca31448937f450ca9df1426ce133db55a3df6f27f6d50a1c44fd0b468e001257696c6c2047542077696e20746f6461793f000359657300024e6f00000000";
+        
+        // Convert hex to Uint8Array
+        const data = new Uint8Array(hexData.match(/.{1,2}/g).map(byte => parseInt(byte, 16)));
+        
+        let output = `Data length: ${data.length} bytes\n\n`;
+        
+        // Read offsets
+        let offset = 0;
+        const titleOffset = (data[offset] << 8) | data[offset + 1];
+        offset += 2;
+        const outcome0Offset = (data[offset] << 8) | data[offset + 1];
+        offset += 2;
+        const outcome1Offset = (data[offset] << 8) | data[offset + 1];
+        offset += 2;
+        const outcome2Offset = (data[offset] << 8) | data[offset + 1];
+        offset += 2;
+        const outcome3Offset = (data[offset] << 8) | data[offset + 1];
+        offset += 2;
+        
+        output += `Offsets:\n`;
+        output += `  title: ${titleOffset}\n`;
+        output += `  outcome0: ${outcome0Offset}\n`;
+        output += `  outcome1: ${outcome1Offset}\n`;
+        output += `  outcome2: ${outcome2Offset}\n`;
+        output += `  outcome3: ${outcome3Offset}\n\n`;
+        
+        // Read static fields
+        const numOutcomes = data[offset];
+        offset += 1;
+        output += `numOutcomes: ${numOutcomes}\n`;
+        
+        const endTimestamp = Number((BigInt(data[offset]) << 56n) | 
+                                    (BigInt(data[offset+1]) << 48n) | 
+                                    (BigInt(data[offset+2]) << 40n) | 
+                                    (BigInt(data[offset+3]) << 32n) | 
+                                    (BigInt(data[offset+4]) << 24n) | 
+                                    (BigInt(data[offset+5]) << 16n) | 
+                                    (BigInt(data[offset+6]) << 8n) | 
+                                    BigInt(data[offset+7]));
+        offset += 8;
+        output += `endTimestamp: ${endTimestamp} (${new Date(endTimestamp * 1000).toISOString()})\n`;
+        
+        const winningIndex = data[offset];
+        offset += 1;
+        output += `winningIndex: ${winningIndex}\n`;
+        
+        const isCancelled = data[offset] !== 0;
+        offset += 1;
+        output += `isCancelled: ${isCancelled}\n\n`;
+        
+        // Skip pools (5 * 8 bytes = 40 bytes)
+        offset += 40;
+        
+        // Skip creator (32 bytes)
+        offset += 32;
+        
+        output += `After static fields, offset: ${offset}\n\n`;
+        
+        // Read dynamic strings
+        function decodeStringAt(offset) {
+            const length = (data[offset] << 8) | data[offset + 1];
+            const bytes = data.slice(offset + 2, offset + 2 + length);
+            return new TextDecoder().decode(bytes);
+        }
+        
+        const title = decodeStringAt(titleOffset);
+        const outcome0 = decodeStringAt(outcome0Offset);
+        const outcome1 = decodeStringAt(outcome1Offset);
+        const outcome2 = decodeStringAt(outcome2Offset);
+        const outcome3 = decodeStringAt(outcome3Offset);
+        
+        output += `Decoded strings:\n`;
+        output += `  title: "${title}"\n`;
+        output += `  outcome0: "${outcome0}"\n`;
+        output += `  outcome1: "${outcome1}"\n`;
+        output += `  outcome2: "${outcome2}"\n`;
+        output += `  outcome3: "${outcome3}"\n`;
+        
+        document.getElementById('output').textContent = output;
+    </script>
+</body>
+</html>
