@@ -7,7 +7,7 @@
 import { useState, useEffect } from 'react';
 import { PriceData } from '@/types/market';
 
-const COINGECKO_API = 'https://api.coingecko.com/api/v3';
+const PRICE_PROXY_API = 'http://localhost:4000/api/prices';
 
 export function usePriceFeed(symbols: string[] = ['bitcoin', 'ethereum', 'algorand']) {
   const [prices, setPrices] = useState<Record<string, PriceData>>({});
@@ -18,7 +18,7 @@ export function usePriceFeed(symbols: string[] = ['bitcoin', 'ethereum', 'algora
     try {
       const ids = symbols.join(',');
       const response = await fetch(
-        `${COINGECKO_API}/simple/price?ids=${ids}&vs_currencies=usd&include_24hr_change=true`,
+        `${PRICE_PROXY_API}?ids=${ids}`,
         {
           headers: {
             'Accept': 'application/json',

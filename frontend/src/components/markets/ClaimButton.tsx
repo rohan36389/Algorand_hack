@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useWallet } from '@/context/WalletContext';
 import { algorandService } from '@/lib/algorand';
 import { TxLink } from '@/components/lora/LoraLink';
-import { Loader2, Trophy } from 'lucide-react';
+import { Loader2, Trophy, CheckCircle } from 'lucide-react';
 
 interface ClaimButtonProps {
   marketId: number;
@@ -66,9 +66,17 @@ export function ClaimButton({ marketId, onSuccess }: ClaimButtonProps) {
       )}
 
       {txId && (
-        <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
-          <p className="text-xs text-green-800 mb-1 font-semibold">Claim successful!</p>
-          <TxLink txId={txId} className="text-xs" />
+        <div className="p-4 bg-green-50 border border-green-200 rounded-lg animate-in fade-in slide-in-from-bottom-2 duration-300">
+          <div className="flex items-center gap-2 text-green-800 mb-2">
+            <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
+              <CheckCircle className="w-3 h-3 text-white" />
+            </div>
+            <p className="text-sm font-bold">Winnings Claimed!</p>
+          </div>
+          <p className="text-xs text-green-700 mb-3">Your payout transaction has been confirmed on-chain.</p>
+          <TxLink txId={txId} className="w-full justify-center py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 no-underline font-medium text-xs">
+            View Receipt on LORA Explorer
+          </TxLink>
         </div>
       )}
     </div>

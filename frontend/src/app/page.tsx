@@ -19,7 +19,7 @@ import { Plus, TrendingUp, Loader2 } from 'lucide-react';
 
 export default function HomePage() {
   const { markets, isLoading, refetch } = useMarkets();
-  const [filter, setFilter] = useState<'all' | 'active' | 'settled'>('active');
+  const [filter, setFilter] = useState<'all' | 'active' | 'settled' | 'expired'>('active');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   const contractsNotDeployed = !algorandService.appId || algorandService.appId === 0;
@@ -28,6 +28,7 @@ export default function HomePage() {
     if (filter === 'all') return true;
     const status = getMarketStatus(market);
     if (filter === 'active') return status === 'active';
+    if (filter === 'expired') return status === 'expired';
     if (filter === 'settled') return status === 'settled';
     return true;
   });
@@ -123,6 +124,16 @@ export default function HomePage() {
               Active
             </button>
             <button
+              onClick={() => setFilter('expired')}
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                filter === 'expired'
+                  ? 'bg-blue-600 text-white'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              Expired
+            </button>
+            <button
               onClick={() => setFilter('settled')}
               className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                 filter === 'settled'
@@ -150,8 +161,10 @@ export default function HomePage() {
               <h3 className="text-lg font-semibold text-gray-900 mb-2">No markets found</h3>
               <p className="text-gray-600 mb-6">
                 {filter === 'active' 
-                  ? 'There are no active markets at the moment.' 
-                  : 'No markets match your filter.'}
+                   ? 'There are no active markets at the moment.' 
+                   : filter === 'expired'
+                   ? 'There are no pending markets awaiting settlement.'
+                   : 'No markets match your filter.'}
               </p>
               <button
                 onClick={() => setIsCreateModalOpen(true)}

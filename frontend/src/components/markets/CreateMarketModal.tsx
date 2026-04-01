@@ -145,7 +145,8 @@ export function CreateMarketModal({ isOpen, onClose, onSuccess }: CreateMarketMo
           <h2 className="text-xl font-semibold text-gray-900">Create New Market</h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
+            disabled={isSubmitting}
+            className="text-gray-400 hover:text-gray-600 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
           >
             <X className="w-6 h-6" />
           </button>
@@ -256,7 +257,8 @@ export function CreateMarketModal({ isOpen, onClose, onSuccess }: CreateMarketMo
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+              disabled={isSubmitting}
+              className="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Cancel
             </button>

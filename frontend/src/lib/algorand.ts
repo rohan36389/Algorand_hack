@@ -39,13 +39,13 @@ const CONTRACT_ABI = new algosdk.ABIContract({
       args: [
         { type: "uint64", name: "market_id" }
       ],
-      returns: { type: "void" }
+      returns: { type: "uint64" }
     },
     {
       name: "settle_market",
       args: [
         { type: "uint64", name: "market_id" },
-        { type: "uint64", name: "winning_index" }
+        { type: "uint8", name: "winning_index" }
       ],
       returns: { type: "void" }
     }
@@ -164,6 +164,25 @@ export class AlgorandService {
       totalPool,
       creator
     };
+  }
+
+  public async getOracleAddress(): Promise<string | null> {
+    try {
+      const appInfo = await this.algodClient.getApplicationByID(this.appId).do();
+      const params = appInfo.params as any;
+      const globalState = params['global-state'] || params.globalState || [];
+      
+      // 'oa' is the key for oracle_address in the contract
+      const oaKeyBase64 = Buffer.from('oa').toString('base64');
+      const oaPair = globalState.find((ks: any) => ks.key === oaKeyBase64);
+      
+      if (oaPair && oaPair.value && oaPair.value.bytes) {
+        return algosdk.encodeAddress(Buffer.from(oaPair.value.bytes, 'base64'));
+      }
+    } catch (e) {
+      console.warn("[ALGORAND] Failed to fetch oracle address:", e);
+    }
+    return null;
   }
 
   public async buildCreateMarketTxns(
@@ -440,7 +459,7 @@ export function formatTimestamp(timestamp: number): string {
 }
 
 export const lora = {
-  tx: (txId: string) => `https://lora.algonode.network/testnet/transaction/${txId}`,
-  account: (address: string) => `https://lora.algonode.network/testnet/account/${address}`,
-  app: (appId: number | string) => `https://lora.algonode.network/testnet/application/${appId}`
+  tx: (txId: string) => `https://lora.algokit.io/testnet/transaction/${txId}`,
+  account: (address: string) => `https://lora.algokit.io/testnet/account/${address}`,
+  app: (appId: number | string) => `https://lora.algokit.io/testnet/application/${appId}`
 };

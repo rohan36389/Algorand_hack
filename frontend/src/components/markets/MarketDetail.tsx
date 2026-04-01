@@ -6,8 +6,8 @@
  */
 
 import { Market, getMarketStatus } from '@/types/market';
-import { microAlgosToAlgo, getTimeRemaining, formatTimestamp } from '@/lib/algorand';
-import { AccountLink, AppLink } from '@/components/lora/LoraLink';
+import { microAlgosToAlgo, getTimeRemaining, formatTimestamp, algorandService } from '@/lib/algorand';
+import { AccountLink, AppLink, TxLink } from '@/components/lora/LoraLink';
 import { BetPanel } from './BetPanel';
 import { PoolChart } from './PoolChart';
 import { OddsDisplay } from './OddsDisplay';
@@ -156,6 +156,15 @@ export function MarketDetail({ market, onUpdate }: MarketDetailProps) {
             <BetPanel market={market} onSuccess={onUpdate} />
           ) : status === 'settled' ? (
             <ClaimButton marketId={market.id} onSuccess={onUpdate} />
+          ) : status === 'expired' ? (
+            <div className="space-y-4">
+              <div className="p-8 bg-amber-50 rounded-xl text-center border-2 border-amber-200 shadow-sm animate-pulse-slow">
+                <Clock className="w-10 h-10 text-amber-500 mx-auto mb-3" />
+                <h4 className="text-lg font-bold text-amber-900">Market Expired</h4>
+                <p className="text-amber-700 text-sm">Waiting for Oracle or Admin to settle the final result.</p>
+              </div>
+              <SettleMarketDebug marketId={market.id} outcomes={market.outcomes} onSuccess={onUpdate} />
+            </div>
           ) : (
             <div className="p-10 bg-gray-100 rounded-xl text-center text-gray-500 font-medium border-2 border-dashed border-gray-200">
               This market is closed.
@@ -171,8 +180,8 @@ export function MarketDetail({ market, onUpdate }: MarketDetailProps) {
             />
           </div>
 
-          {/* Testing Utility */}
-          {status === 'active' && (
+          {/* Testing Utility (Move it up if it's not and add more conditions) */}
+          {(status === 'active') && (
             <SettleMarketDebug marketId={market.id} outcomes={market.outcomes} onSuccess={onUpdate} />
           )}
         </div>
@@ -202,9 +211,10 @@ export function MarketDetail({ market, onUpdate }: MarketDetailProps) {
                 <span className="font-medium text-gray-900">2%</span>
               </div>
               <div className="pt-3 border-t border-gray-200">
-                <AppLink appId={market.id} className="text-sm">
-                  View on LORA Explorer
+                <AppLink appId={algorandService.appId} className="text-sm">
+                  View App on LORA Explorer
                 </AppLink>
+                <p className="text-[10px] text-gray-400 mt-1">Contract ID: {algorandService.appId}</p>
               </div>
             </div>
           </div>
