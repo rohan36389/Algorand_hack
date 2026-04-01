@@ -6,7 +6,7 @@
 
 import { Market, getMarketStatus } from '@/types/market';
 import { microAlgosToAlgo, getTimeRemaining } from '@/lib/algorand';
-import { Clock, TrendingUp, Users, CheckCircle, XCircle } from 'lucide-react';
+import { Clock, TrendingUp, Users, CheckCircle, XCircle, Bot, MessageSquare } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 
@@ -14,9 +14,23 @@ interface MarketCardProps {
   market: Market;
 }
 
+interface MarketMeta {
+  aiConfidenceLabel?: string;
+  aiProbabilityYes?: number;
+  comments?: any[];
+}
+
 export function MarketCard({ market }: MarketCardProps) {
   const [timeLeft, setTimeLeft] = useState(getTimeRemaining(market.endTimestamp));
+  const [meta, setMeta] = useState<MarketMeta | null>(null);
   const status = getMarketStatus(market);
+
+  useEffect(() => {
+    fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000'}/api/markets/${market.id}/meta`)
+      .then(res => res.json())
+      .then(data => setMeta(data))
+      .catch(console.error);
+  }, [market.id]);
 
   useEffect(() => {
     if (status !== 'active') return;
@@ -64,6 +78,15 @@ export function MarketCard({ market }: MarketCardProps) {
           </span>
         </div>
 
+        {meta?.aiConfidenceLabel && (
+          <div className="mb-4">
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded text-xs font-medium bg-purple-100 text-purple-800 border border-purple-200">
+              <Bot className="w-3 h-3" />
+              AI Confidence: {meta.aiConfidenceLabel}
+            </span>
+          </div>
+        )}
+
         {status === 'active' && timeLeft.total > 0 && (
           <div className="mb-4 p-3 bg-blue-50 rounded-lg">
             <div className="flex items-center gap-2 text-sm text-blue-900">
@@ -98,14 +121,22 @@ export function MarketCard({ market }: MarketCardProps) {
           })}
         </div>
 
-        <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-          <div className="flex items-center gap-2 text-sm text-gray-600">
-            <TrendingUp className="w-4 h-4" />
-            <span className="font-semibold">{microAlgosToAlgo(market.totalPool).toFixed(2)} ALGO</span>
-          </div>
-          <div className="flex items-center gap-2 text-sm text-gray-600">
-            <Users className="w-4 h-4" />
-            <span>Market #{market.id}</span>
+        <div className="flex items-center justify-between pt-4 border-t border-gray-100 mt-4">
+          <div className="flex bg-gray-50 rounded-lg p-1.5 gap-4">
+            <div className="flex items-center gap-1.5 text-xs text-gray-600 font-medium">
+              <TrendingUp className="w-3.5 h-3.5" />
+              <span>{microAlgosToAlgo(market.totalPool).toFixed(2)} ALGO</span>
+            </div>
+            <div className="flex items-center gap-1.5 text-xs text-gray-600 font-medium">
+              <Users className="w-3.5 h-3.5" />
+              <span>#{market.id}</span>
+            </div>
+            {meta?.comments && (
+              <div className="flex items-center gap-1.5 text-xs text-gray-600 font-medium">
+                <MessageSquare className="w-3.5 h-3.5" />
+                <span>{meta.comments.length}</span>
+              </div>
+            )}
           </div>
         </div>
       </div>

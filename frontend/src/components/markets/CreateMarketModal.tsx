@@ -80,10 +80,10 @@ export function CreateMarketModal({ isOpen, onClose, onSuccess }: CreateMarketMo
 
     const endTimestamp = Math.floor(new Date(`${endDate}T${endTime}`).getTime() / 1000);
     const now = Math.floor(Date.now() / 1000);
-    const minBuffer = 60 * 60; // 1 hour buffer
+    const minBuffer = 10; // 10 seconds buffer for testing
 
     if (endTimestamp < now + minBuffer) {
-      setError('End time must be at least 1 hour in the future');
+      setError('End time must be in the future (min 10s away)');
       return;
     }
 

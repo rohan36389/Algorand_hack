@@ -11,6 +11,11 @@ import { AccountLink, AppLink } from '@/components/lora/LoraLink';
 import { BetPanel } from './BetPanel';
 import { PoolChart } from './PoolChart';
 import { OddsDisplay } from './OddsDisplay';
+import { PriceChart } from '../trading/PriceChart';
+import { Orderbook } from '../trading/Orderbook';
+import { CommentSection } from '../social/CommentSection';
+import { ClaimButton } from './ClaimButton';
+import { SettleMarketDebug } from './SettleMarketDebug';
 import { Clock, TrendingUp, Calendar, User, CheckCircle, XCircle } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
@@ -142,10 +147,20 @@ export function MarketDetail({ market, onUpdate }: MarketDetailProps) {
       </div>
 
       {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column - Betting */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+        {/* Left Column - Betting and Charts */}
         <div className="lg:col-span-2 space-y-6">
-          <BetPanel market={market} onSuccess={onUpdate} />
+          <PriceChart market={market} />
+          
+          {status === 'active' ? (
+            <BetPanel market={market} onSuccess={onUpdate} />
+          ) : status === 'settled' ? (
+            <ClaimButton marketId={market.id} onSuccess={onUpdate} />
+          ) : (
+            <div className="p-10 bg-gray-100 rounded-xl text-center text-gray-500 font-medium border-2 border-dashed border-gray-200">
+              This market is closed.
+            </div>
+          )}
 
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Current Odds</h3>
@@ -155,6 +170,11 @@ export function MarketDetail({ market, onUpdate }: MarketDetailProps) {
               outcomes={market.outcomes} 
             />
           </div>
+
+          {/* Testing Utility */}
+          {status === 'active' && (
+            <SettleMarketDebug marketId={market.id} outcomes={market.outcomes} onSuccess={onUpdate} />
+          )}
         </div>
 
         {/* Right Column - Pool Distribution */}
@@ -163,6 +183,8 @@ export function MarketDetail({ market, onUpdate }: MarketDetailProps) {
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Pool Distribution</h3>
             <PoolChart pools={market.pools} outcomes={market.outcomes} />
           </div>
+
+          <Orderbook market={market} />
 
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Market Info</h3>
@@ -188,6 +210,9 @@ export function MarketDetail({ market, onUpdate }: MarketDetailProps) {
           </div>
         </div>
       </div>
+
+      {/* Social Layer */}
+      <CommentSection marketId={market.id} />
     </div>
   );
 }

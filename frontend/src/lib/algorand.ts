@@ -6,6 +6,52 @@ const ALGOD_TOKEN = process.env.NEXT_PUBLIC_ALGOD_TOKEN || '';
 const ALGOD_PORT = process.env.NEXT_PUBLIC_ALGOD_PORT || 443;
 const APP_ID = parseInt(process.env.NEXT_PUBLIC_APP_ID || '0');
 
+const CONTRACT_ABI = new algosdk.ABIContract({
+  name: "PredictionMarket",
+  desc: "Algorand Prediction Market",
+  networks: {},
+  methods: [
+    {
+      name: "create_market",
+      args: [
+        { type: "string", name: "title" },
+        { type: "string", name: "outcome_0" },
+        { type: "string", name: "outcome_1" },
+        { type: "string", name: "outcome_2" },
+        { type: "string", name: "outcome_3" },
+        { type: "uint8", name: "num_outcomes" },
+        { type: "uint64", name: "end_timestamp" },
+        { type: "pay", name: "mbr_payment" }
+      ],
+      returns: { type: "uint64" }
+    },
+    {
+      name: "place_bet",
+      args: [
+        { type: "uint64", name: "market_id" },
+        { type: "uint8", name: "option_index" },
+        { type: "pay", name: "payment" }
+      ],
+      returns: { type: "void" }
+    },
+    {
+      name: "claim_winnings",
+      args: [
+        { type: "uint64", name: "market_id" }
+      ],
+      returns: { type: "void" }
+    },
+    {
+      name: "settle_market",
+      args: [
+        { type: "uint64", name: "market_id" },
+        { type: "uint64", name: "winning_index" }
+      ],
+      returns: { type: "void" }
+    }
+  ]
+});
+
 export class AlgorandService {
   public algodClient: algosdk.Algodv2;
   public appId: number;
@@ -141,14 +187,30 @@ export class AlgorandService {
     let nextMarketId = 1;
     try {
       const appInfo = await this.algodClient.getApplicationByID(this.appId).do();
-      const globalState = appInfo.params.globalState || [];
-      const mcKey = btoa('mc'); // 'mc' in base64
-      const mcPair = globalState.find((ks: any) => ks.key === mcKey);
-      if (mcPair) {
+      const params = appInfo.params as any;
+      const globalState = params['global-state'] || params.globalState || [];
+      
+      // Robustly find 'mc' (market_counter) by decoding keys
+      const mcPair = globalState.find((ks: any) => {
+        try {
+          // In some environments b64 decoding might differ, so we try decoding the key to string
+          const decodedKey = Buffer.from(ks.key, 'base64').toString();
+          return decodedKey === 'mc';
+        } catch {
+          try {
+            return atob(ks.key) === 'mc';
+          } catch {
+            return false;
+          }
+        }
+      });
+
+      if (mcPair && mcPair.value && mcPair.value.uint !== undefined) {
         nextMarketId = Number(mcPair.value.uint) + 1;
       }
+      console.log(`[ALGORAND] Current MC is ${nextMarketId - 1}, Predicting Box for Market #${nextMarketId}`);
     } catch (e) {
-      console.warn("Could not read market_counter", e);
+      console.warn("[ALGORAND] Failed to fetch market_counter accurately, defaulting to 1:", e);
     }
 
     const marketBoxName = new Uint8Array(11);
@@ -264,6 +326,67 @@ export class AlgorandService {
       boxes: [
         { appIndex: 0, name: marketBoxName },
         { appIndex: 0, name: betBoxName }
+      ],
+      signer: algosdk.makeEmptyTransactionSigner()
+    });
+
+    const txns = atc.buildGroup();
+    return txns.map(t => t.txn);
+  }
+
+  public async buildClaimWinningsTxns(
+    activeAccount: string,
+    marketId: number
+  ): Promise<algosdk.Transaction[]> {
+    const atc = new algosdk.AtomicTransactionComposer();
+    const sp = await this.algodClient.getTransactionParams().do();
+
+    const marketBoxName = new Uint8Array(11);
+    marketBoxName.set(new TextEncoder().encode("mkt"), 0);
+    new DataView(marketBoxName.buffer).setBigUint64(3, BigInt(marketId), false);
+
+    const betBoxName = new Uint8Array(43);
+    betBoxName.set(new TextEncoder().encode("bet"), 0);
+    new DataView(betBoxName.buffer).setBigUint64(3, BigInt(marketId), false);
+    betBoxName.set(algosdk.decodeAddress(activeAccount).publicKey, 11);
+
+    atc.addMethodCall({
+      appID: this.appId,
+      method: CONTRACT_ABI.getMethodByName("claim_winnings"),
+      methodArgs: [marketId],
+      sender: activeAccount,
+      suggestedParams: sp,
+      boxes: [
+        { appIndex: 0, name: marketBoxName },
+        { appIndex: 0, name: betBoxName }
+      ],
+      signer: algosdk.makeEmptyTransactionSigner()
+    });
+
+    const txns = atc.buildGroup();
+    return txns.map(t => t.txn);
+  }
+
+  public async buildSettleMarketTxns(
+    activeAccount: string,
+    marketId: number,
+    winningIndex: number
+  ): Promise<algosdk.Transaction[]> {
+    const atc = new algosdk.AtomicTransactionComposer();
+    const sp = await this.algodClient.getTransactionParams().do();
+
+    const marketBoxName = new Uint8Array(11);
+    marketBoxName.set(new TextEncoder().encode("mkt"), 0);
+    new DataView(marketBoxName.buffer).setBigUint64(3, BigInt(marketId), false);
+
+    atc.addMethodCall({
+      appID: this.appId,
+      method: CONTRACT_ABI.getMethodByName("settle_market"),
+      methodArgs: [marketId, winningIndex],
+      sender: activeAccount,
+      suggestedParams: sp,
+      boxes: [
+        { appIndex: 0, name: marketBoxName }
       ],
       signer: algosdk.makeEmptyTransactionSigner()
     });
